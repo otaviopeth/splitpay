@@ -4,26 +4,21 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 //Lista todos os produtos
+//Para usar a paginacao use os params: ?page={pagina}&limit={num_max_registros}
 
 $app->get('/api/produtos', function (Request $request, Response $response) {
-  $sql = "SELECT * FROM produtos";
-  try {
+  $page = (isset($_GET['page']) && $_GET['page'] > 0) ? $_GET['page'] : 1;
+  $limit = isset($_GET['limit']) ? $_GET['limit'] : 10;
 
-    //Faz a conexão com o banco e realiza a query.
-    $db = new Db();
-    $db = $db->connect();
-    $stmt = $db->query($sql);
-    $produtos = $stmt->fetchAll(PDO::FETCH_OBJ);
-    $db = null;
+  $countsql = "SELECT COUNT(*) as COUNT FROM produtos";
+  $datasql = "SELECT * FROM produtos LIMIT :limit OFFSET :offset";
 
-    $data = json_encode($produtos);
-
-    $response->getBody()->write($data);
+  $input=array();
+  $data = getData ($countsql, $datasql, $page, $limit, $input);  
+  $response->getBody()->write($data);
     return $response
       ->withHeader('Content-Type', 'application/json');
-  } catch (PDOException $e) {
-    echo '{"error": "text":' . $e->getMessage() . '}';
-  }
+ 
 });
 
 
@@ -88,11 +83,7 @@ $app->post('/api/produtos', function (Request $request, Response $response) {
       ->withHeader('Content-Type', 'application/json');
   } catch (PDOException $e) {
 
-    $msgErr = array('error' => $e->getMessage());
-    $msgErrJson = json_encode($msgErr);
-    $response->getBody()->write($msgErrJson);
-    return $response
-      ->withHeader('Content-Type', 'application/json')->withStatus(400);
+    echo '{"error": "text":' . $e->getMessage() . '}';
   }
 });
 
@@ -139,11 +130,7 @@ $app->put('/api/produtos/{id}', function (Request $request, Response $response) 
       ->withHeader('Content-Type', 'application/json');
   } catch (PDOException $e) {
 
-    $msgErr = array('error' => $e->getMessage());
-    $msgErrJson = json_encode($msgErr);
-    $response->getBody()->write($msgErrJson);
-    return $response
-      ->withHeader('Content-Type', 'application/json')->withStatus(400);
+    echo '{"error": "text":' . $e->getMessage() . '}';
   }
 });
 
